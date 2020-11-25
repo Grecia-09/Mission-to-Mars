@@ -9,7 +9,7 @@ import datetime as dt
 
 def scrape_all():
     # Initiate headless driver for deployment
-    browser = Browser("chrome", executable_path="chromedriver", headless=True)
+    browser = Browser("chrome", headless=True)
 
     news_title, news_paragraph = mars_news(browser)
 
@@ -19,6 +19,7 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
+        "hemispheres_image_url": hemisphere (browser),
         "last_modified": dt.datetime.now()
     }
 
@@ -101,6 +102,43 @@ def mars_facts():
 
     # Convert dataframe into HTML format, add bootstrap
     return df.to_html(classes="table table-striped")
+
+def hemisphere(browser):
+    # Visit the USGS Astrogeology Science Center Site
+    url = "https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars"
+    browser.visit(url)
+
+    # List of hemispheres
+    hemisphere_image_urls = []
+
+    # Get the title of the hemispheres
+    links = browser.find_by_css("a.product-item h3")
+
+    # Iterate through all the hemispheres. len = 4 
+    for item in range(len(links)):
+        # Empty dictionary
+        hemisphere = {}
+        
+        # Click on the title of the hemispheres in the principal page
+        browser.find_by_css("a.product-item h3")[item].click()
+        
+        # Once clicked, find the "href" by partial text "Sample"
+        sample_element = browser.find_link_by_text("Sample").first
+
+        # Image URL string as the value for the img_url key that will be stored in the dictionary 
+        hemisphere["img_url"] = sample_element["href"]
+        
+        # Get hemisphere title as text
+        hemisphere["title"] = browser.find_by_css("h2.title").text
+        
+        # Append dictorionary to the list of hemispheres
+        hemisphere_image_urls.append(hemisphere)
+        
+        # Navigate to the principal page, go back to click on the second hemisphere and so on
+        browser.back()
+
+    return hemisphere_image_urls
+    
 
 if __name__ == "__main__":
 
